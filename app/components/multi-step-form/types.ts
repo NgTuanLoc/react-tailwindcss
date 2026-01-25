@@ -97,6 +97,20 @@ export type Account = z.infer<typeof accountSchema>;
 export type Preferences = z.infer<typeof preferencesSchema>;
 export type FullFormData = z.infer<typeof fullFormSchema>;
 
+// Type-safe nested path utility
+// Generates union of all valid dot-notation paths like "personalInfo.email" | "account.username"
+type NestedKeyOf<T, Prefix extends string = ""> = T extends object
+  ? {
+      [K in keyof T & string]: T[K] extends object
+        ? T[K] extends unknown[]
+          ? `${Prefix}${K}`
+          : NestedKeyOf<T[K], `${Prefix}${K}.`> | `${Prefix}${K}`
+        : `${Prefix}${K}`;
+    }[keyof T & string]
+  : never;
+
+export type FormFieldPath = NestedKeyOf<FullFormData>;
+
 // Form step configuration
 export interface FormStep {
   id: number;

@@ -3,6 +3,21 @@
 import { useFormContext } from "react-hook-form";
 import type { FullFormData } from "./types";
 
+// Simulated API call to check if email exists
+// Replace this with your actual API call
+export async function checkEmailExists(email: string): Promise<boolean> {
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  // Simulated list of existing emails (replace with actual API call)
+  const existingEmails = [
+    "test@example.com",
+    "user@example.com",
+    "admin@example.com",
+  ];
+  return existingEmails.includes(email.toLowerCase());
+}
+
 export function PersonalInfoStep() {
   const {
     register,
@@ -66,7 +81,11 @@ export function PersonalInfoStep() {
           id="email"
           type="email"
           {...register("personalInfo.email")}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors ${
+            errors.personalInfo?.email
+              ? "border-red-500 dark:border-red-500"
+              : "border-gray-300 dark:border-gray-600"
+          }`}
           placeholder="john.doe@example.com"
         />
         {errors.personalInfo?.email && (
