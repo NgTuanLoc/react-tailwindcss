@@ -5,22 +5,13 @@ import { CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ExpandableSearch } from "./ExpandableSearch";
-import { AddressItem, SubAddress } from "./types";
+import { Address } from "./types";
 
 export function ExpandableSearchShowcase() {
-  const [selection, setSelection] = useState<{
-    item: AddressItem | null;
-    subAddress: SubAddress | null;
-  }>({
-    item: null,
-    subAddress: null,
-  });
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
-  const handleSelect = (item: AddressItem, subAddress?: SubAddress) => {
-    setSelection({
-      item,
-      subAddress: subAddress || null,
-    });
+  const handleSelect = (address: Address) => {
+    setSelectedAddress(address);
   };
 
   return (
@@ -31,14 +22,14 @@ export function ExpandableSearchShowcase() {
             Expandable Search Component
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Click on containers to expand and view sub-addresses
+            Search and select containers or addresses - containers load nested addresses dynamically
           </p>
         </div>
 
         <ExpandableSearch onSelect={handleSelect} />
 
         {/* Selection Display */}
-        {selection.item && (
+        {selectedAddress && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle>Current Selection</CardTitle>
@@ -47,42 +38,27 @@ export function ExpandableSearchShowcase() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-muted-foreground">
-                    {selection.item.type === "container"
+                    {selectedAddress.type === "container"
                       ? "Container:"
                       : "Address:"}
                   </span>
                   <Badge
                     variant={
-                      selection.item.type === "container"
+                      selectedAddress.type === "container"
                         ? "default"
                         : "outline"
                     }
                   >
-                    {selection.item.type}
+                    {selectedAddress.type}
                   </Badge>
                 </div>
                 <div>
-                  <div className="font-medium">{selection.item.name}</div>
+                  <div className="font-medium">{selectedAddress.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    {selection.item.code}
+                    {selectedAddress.code}
                   </div>
                 </div>
               </div>
-              {selection.subAddress && (
-                <div className="space-y-2 pt-2 border-t">
-                  <span className="text-sm font-medium text-muted-foreground">
-                    Sub-Address:
-                  </span>
-                  <div>
-                    <div className="font-medium">
-                      {selection.subAddress.name}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {selection.subAddress.code}
-                    </div>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}
@@ -103,6 +79,12 @@ export function ExpandableSearchShowcase() {
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <span>
+                  <strong>Mock API</strong> with async data fetching and loading states
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <span>
                   Support for both <strong>containers</strong> and{" "}
                   <strong>normal addresses</strong>
                 </span>
@@ -110,12 +92,14 @@ export function ExpandableSearchShowcase() {
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <span>
-                  Search through containers, addresses, and sub-addresses
+                  Dynamic loading of nested addresses when clicking containers
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Click containers to expand/collapse sub-addresses</span>
+                <span>
+                  Real-time search with loading indicators
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
@@ -124,10 +108,6 @@ export function ExpandableSearchShowcase() {
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                 <span>Dark mode support via theme system</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Real-time filtering with lucide-react icons</span>
               </li>
             </ul>
           </CardContent>

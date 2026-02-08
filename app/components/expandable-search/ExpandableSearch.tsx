@@ -1,77 +1,74 @@
 "use client";
 
-import { useState } from "react";
-import { Search, ChevronRight, Package, MapPin, Box } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, ChevronRight, Package, MapPin, Box, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  AddressItem,
-  Container,
-  SubAddress,
-  NormalAddress,
-  ExpandableSearchProps,
-} from "./types";
-import { mockAddresses } from "./mockData";
+import { Address, ExpandableSearchProps } from "./types";
+import { searchAddresses, getContainerAddresses, getContainerAddressCount } from "./mockApi";
 
 export function ExpandableSearch({ onSelect }: ExpandableSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [selectedSubAddress, setSelectedSubAddress] = useState<string | null>(
-    null,
-  );
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [expandedContainers, setExpandedContainers] = useState<Map<string, Address[]>>(new Map());
+  const [loadingContainers, setLoadingContainers] = useState<Set<string>>(new Set());
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
-  const filteredAddresses = mockAddresses.filter((item) => {
-    const matchesItem =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchTerm.toLowerCase());
+  // Fetch addresses on search term change
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      setIsSearching(true);
+      try {
+        const results = await searchAddresses(searchTerm);
+        setAddresses(results);
+      } catch (error) {
+        console.error("Error searching addresses:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
 
-    if (item.type === "container") {
-      const matchesSubAddress = item.subAddresses.some(
-        (sub) =>
-          sub.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          sub.code.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-      return matchesItem || matchesSubAddress;
-    }
+    fetchAddresses();
+  }, [searchTerm]);
 
-    return matchesItem;
-  });
+  const handleContainerClick = async (container: Address) => {
+    if (container.type !== "container") return;
 
-  const toggleExpand = (itemId: string) => {
-    const newExpanded = new Set(expandedIds);
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
-    } else {
-      newExpanded.add(itemId);
-    }
-    setExpandedIds(newExpanded);
-  };
-
-  const handleContainerClick = (container: Container) => {
-    setSelectedItemId(container.id);
-    setSelectedSubAddress(null);
-    toggleExpand(container.id);
+    setSelectedAddressId(container.id);
     onSelect?.(container);
+
+    // If already expanded, collapse it
+    if (expandedContainers.has(container.id)) {
+      const newExpanded = new Map(expandedContainers);
+      newExpanded.delete(container.id);
+      setExpandedContainers(newExpanded);
+      return;
+    }
+
+    // Fetch nested addresses
+    setLoadingContainers((prev) => new Set(prev).add(container.id));
+    try {
+      const nestedAddresses = await getContainerAddresses(container.id);
+      const newExpanded = new Map(expandedContainers);
+      newExpanded.set(container.id, nestedAddresses);
+      setExpandedContainers(newExpanded);
+    } catch (error) {
+      console.error("Error fetching container addresses:", error);
+    } finally {
+      setLoadingContainers((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(container.id);
+        return newSet;
+      });
+    }
   };
 
-  const handleNormalAddressClick = (address: NormalAddress) => {
-    setSelectedItemId(address.id);
-    setSelectedSubAddress(null);
+  const handleAddressClick = (address: Address) => {
+    setSelectedAddressId(address.id);
     onSelect?.(address);
-  };
-
-  const handleSubAddressClick = (
-    e: React.MouseEvent,
-    container: Container,
-    subAddress: SubAddress,
-  ) => {
-    e.stopPropagation();
-    setSelectedItemId(container.id);
-    setSelectedSubAddress(subAddress.id);
-    onSelect?.(container, subAddress);
   };
 
   return (
@@ -89,43 +86,55 @@ export function ExpandableSearch({ onSelect }: ExpandableSearchProps) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+              {isSearching && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground animate-spin" />
+              )}
             </div>
           </div>
 
           {/* Results */}
           <ScrollArea className="h-[400px]">
-            {filteredAddresses.length === 0 ? (
+            {isSearching && addresses.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                Searching...
+              </div>
+            ) : addresses.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
                 No addresses found
               </div>
             ) : (
               <div className="divide-y">
-                {filteredAddresses.map((item) =>
-                  item.type === "container" ? (
-                    <div key={item.id}>
+                {addresses.map((address) =>
+                  address.type === "container" ? (
+                    <div key={address.id}>
                       {/* Container */}
                       <div
-                        onClick={() => handleContainerClick(item)}
+                        onClick={() => handleContainerClick(address)}
                         className={`p-4 cursor-pointer hover:bg-accent transition-colors ${
-                          selectedItemId === item.id && !selectedSubAddress
+                          selectedAddressId === address.id
                             ? "bg-accent"
                             : ""
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3 flex-1">
-                            <ChevronRight
-                              className={`h-5 w-5 text-muted-foreground transition-transform ${
-                                expandedIds.has(item.id) ? "rotate-90" : ""
-                              }`}
-                            />
+                            {loadingContainers.has(address.id) ? (
+                              <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                            ) : (
+                              <ChevronRight
+                                className={`h-5 w-5 text-muted-foreground transition-transform ${
+                                  expandedContainers.has(address.id) ? "rotate-90" : ""
+                                }`}
+                              />
+                            )}
                             <Box className="h-5 w-5 text-muted-foreground" />
                             <div className="flex-1">
-                              <div className="font-medium">{item.name}</div>
+                              <div className="font-medium">{address.name}</div>
                               <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                <span>{item.code}</span>
+                                <span>{address.code}</span>
                                 <Badge variant="secondary" className="text-xs">
-                                  {item.subAddresses.length} sub-addresses
+                                  {getContainerAddressCount(address.id)} sub-addresses
                                 </Badge>
                               </div>
                             </div>
@@ -134,17 +143,18 @@ export function ExpandableSearch({ onSelect }: ExpandableSearchProps) {
                         </div>
                       </div>
 
-                      {/* Sub-addresses */}
-                      {expandedIds.has(item.id) && (
+                      {/* Nested addresses */}
+                      {expandedContainers.has(address.id) && (
                         <div className="bg-muted/50">
-                          {item.subAddresses.map((subAddress) => (
+                          {expandedContainers.get(address.id)?.map((nestedAddress) => (
                             <div
-                              key={subAddress.id}
-                              onClick={(e) =>
-                                handleSubAddressClick(e, item, subAddress)
-                              }
+                              key={nestedAddress.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddressClick(nestedAddress);
+                              }}
                               className={`p-4 pl-16 cursor-pointer hover:bg-accent transition-colors border-l-4 ${
-                                selectedSubAddress === subAddress.id
+                                selectedAddressId === nestedAddress.id
                                   ? "border-primary bg-accent"
                                   : "border-transparent"
                               }`}
@@ -153,10 +163,10 @@ export function ExpandableSearch({ onSelect }: ExpandableSearchProps) {
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
                                 <div>
                                   <div className="font-medium text-sm">
-                                    {subAddress.name}
+                                    {nestedAddress.name}
                                   </div>
                                   <div className="text-xs text-muted-foreground">
-                                    {subAddress.code}
+                                    {nestedAddress.code}
                                   </div>
                                 </div>
                               </div>
@@ -168,18 +178,18 @@ export function ExpandableSearch({ onSelect }: ExpandableSearchProps) {
                   ) : (
                     // Normal Address
                     <div
-                      key={item.id}
-                      onClick={() => handleNormalAddressClick(item)}
+                      key={address.id}
+                      onClick={() => handleAddressClick(address)}
                       className={`p-4 cursor-pointer hover:bg-accent transition-colors ${
-                        selectedItemId === item.id ? "bg-accent" : ""
+                        selectedAddressId === address.id ? "bg-accent" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-muted-foreground" />
                         <div className="flex-1">
-                          <div className="font-medium">{item.name}</div>
+                          <div className="font-medium">{address.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {item.code}
+                            {address.code}
                           </div>
                         </div>
                         <Badge variant="outline">Address</Badge>
