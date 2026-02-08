@@ -9,9 +9,18 @@ import { Address } from "./types";
 
 export function ExpandableSearchShowcase() {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [expandLog, setExpandLog] = useState<Array<{ id: string; message: string }>>([]);
 
   const handleSelect = (address: Address) => {
     setSelectedAddress(address);
+  };
+
+  const handleContainerExpand = (containerId: string) => {
+    setExpandLog((prev) => [...prev, { id: Date.now().toString(), message: `Expanded: ${containerId}` }]);
+  };
+
+  const handleContainerCollapse = (containerId: string) => {
+    setExpandLog((prev) => [...prev, { id: Date.now().toString(), message: `Collapsed: ${containerId}` }]);
   };
 
   return (
@@ -26,7 +35,14 @@ export function ExpandableSearchShowcase() {
           </p>
         </div>
 
-        <ExpandableSearch onSelect={handleSelect} />
+        <ExpandableSearch 
+          onSelect={handleSelect}
+          onContainerExpand={handleContainerExpand}
+          onContainerCollapse={handleContainerCollapse}
+          placeholder="Search for warehouses, offices, or addresses..."
+          scrollHeight="500px"
+          showContainerCount={true}
+        />
 
         {/* Selection Display */}
         {selectedAddress && (
@@ -63,6 +79,24 @@ export function ExpandableSearchShowcase() {
           </Card>
         )}
 
+        {/* Expand/Collapse Log */}
+        {expandLog.length > 0 && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Container Events Log</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-1 max-h-32 overflow-y-auto">
+                {expandLog.slice(-5).reverse().map((entry) => (
+                  <div key={entry.id} className="text-sm text-muted-foreground font-mono">
+                    {entry.message}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Features List */}
         <Card className="mt-8">
           <CardHeader>
@@ -71,42 +105,56 @@ export function ExpandableSearchShowcase() {
           <CardContent>
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                <span>
+                  <strong>Fully reusable</strong> with customizable props
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                 <span>
                   Built with <strong>shadcn/ui</strong> components
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                 <span>
                   <strong>Mock API</strong> with async data fetching and loading states
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                <span>
+                  <strong>Custom callbacks</strong> for expand/collapse events
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                 <span>
                   Support for both <strong>containers</strong> and{" "}
                   <strong>normal addresses</strong>
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                 <span>
                   Dynamic loading of nested addresses when clicking containers
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                <span>
+                  Configurable search function and API endpoints
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                 <span>
                   Real-time search with loading indicators
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Visual feedback with badges and hover effects</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                 <span>Dark mode support via theme system</span>
               </li>
             </ul>
