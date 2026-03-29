@@ -1,6 +1,5 @@
-import { ThemeShowcase } from "@/app/components/theme-switcher";
-import { SearchableDropdownShowcase } from "../components/searchable-dropdown";
+import { StackedCarouselShowcase } from "../components/stacked-carousel";
 
 export default function ThemePage() {
-  return <SearchableDropdownShowcase />;
+  return <StackedCarouselShowcase />;
 }
